@@ -9,20 +9,20 @@
 </head>
 <body>
 <h1>Todo list</h1>
-<div>
+<form id="form-todo">
     <label for="todo-name">
         Enter name todo
+        <input type="checkbox" id="todo-check"/>
         <input type="text" id="todo-name" placeholder="check todo list"/>
     </label>
-    <button id="create-todo">Create todo</button>
-    <button id="clear-all">Clear all</button>
-</div>
+    <button type="submit" id="create-todo">Create todo</button>
+</form>
 
-<div>
-    <ul id="lists-todo">
+<section>
+    <ul  id="lists-todo">
 
     </ul>
-</div>
+</section>
 <script>var exports = {};</script>
 <script src="./script/main.js"></script>
 </body>

@@ -1,103 +1,108 @@
 import {ITodo} from "./utils";
 
-function drawLists(arr, body) {
-    if (!!arr.length) {
-        arr.forEach((item) => {
-            // @ts-ignore
-            const li = document.createElement('li') as HTMLElement
-            li.className = 'list-todo'
-
-            // @ts-ignore
-            li.innerHTML = `
-                ${item.name}
-                <button class="btn-remove-list" id="close-${item.id}">&times;</button>
-            `;
-            body.appendChild(li);
-        })
-    } else {
-        const allLi: NodeListOf<Element> = document.querySelectorAll('.list-todo')
-        allLi.forEach(list => list.remove())
-    }
-}
-
-function clearFieldsList (){
-    const allLi: NodeListOf<Element> = document.querySelectorAll('.list-todo')
-    allLi.forEach(list => list.remove())
-}
-
-
 document.addEventListener("DOMContentLoaded", () => {
 
-    const inputTodo: HTMLInputElement = document.querySelector('#todo-name');
-    const createTodo: HTMLButtonElement = document.querySelector('#create-todo');
-    const createAll: HTMLButtonElement = document.querySelector('#clear-all');
-
     const listsTodo = document.querySelector('#lists-todo');
+    let todosListsLc: Array<Object> = JSON.parse(localStorage.getItem('todos')) || [];
 
-    let todosLists: Array<Object> = JSON.parse(localStorage.getItem('lists')) || []
+    const inputTodo: HTMLInputElement = document.querySelector('#todo-name');
+    const inputCheck: HTMLInputElement = document.querySelector('#todo-check');
+    const formCreateTodo = document.querySelector('#form-todo');
 
-    drawLists(todosLists, listsTodo)
-    const btnRemoveList = document.querySelectorAll('.btn-remove-list');
-    btnRemoveList.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const listId = btn.id.split('-')[1];
+    if (localStorage.getItem('todos')) {
 
-            // @ts-ignore
-            todosLists = todosLists.filter(todo => todo.id != listId)
-
-            drawLists(todosLists, listsTodo)
+        todosListsLc.map(todo => {
+            createTodo(todo)
         })
-    })
-    // if (btnRemoveList) {
-    //     btnRemoveList.addEventListener('click', () => {
-    //         const buttonId = btnRemoveList.id;
-    //         console.log('Button ID:', buttonId);
-    //     })
-    // }
+    }
 
-    // if (!!todosLists.length) {
-    //     drawLists(todosLists, listsTodo)
-    //     createAll.removeAttribute('disabled')
-    // } else {
-    //     drawLists([], listsTodo)
-    //     createAll.setAttribute('disabled', '');
-    // }
-
-    createAll.addEventListener('click', () => {
-        // @ts-ignore
-        localStorage.setItem('lists', [])
-        clearFieldsList()
-        drawLists([], listsTodo)
-    })
-
-    createTodo.addEventListener('click', () => {
-        const allLi: NodeListOf<Element> = document.querySelectorAll('.list-todo')
-        allLi.forEach(list => list.remove())
+    formCreateTodo.addEventListener('submit', e => {
+        e.preventDefault()
 
         if (!!inputTodo.value.length) {
-            let objTodo: ITodo = {
+
+            const objTodo: ITodo = {
                 id: Date.now(),
                 name: inputTodo.value.trim(),
-                isShowing: true
+                isShowing: inputCheck.checked
             }
 
-            todosLists.push(objTodo)
-
-            console.log(todosLists)
-            drawLists(todosLists, listsTodo)
+            todosListsLc.push(objTodo)
 
             inputTodo.value = ''
-            localStorage.setItem('lists', JSON.stringify(todosLists))
-            // return todosLists
+            localStorage.setItem('todos', JSON.stringify(todosListsLc))
+
+            createTodo(objTodo)
+
         } else {
             alert('input not must be empty')
         }
+    })
+
+    // @ts-ignore
+    formCreateTodo.reset()
+    inputTodo.focus()
+
+    listsTodo.addEventListener('click', e => {
+        // @ts-ignore
+        if (e.target.classList.contains('remove-task')) {
+            // @ts-ignore
+            const todoId = e.target.closest('li').id
+
+            removeTodo(todoId)
+        }
+    })
+
+    listsTodo.addEventListener('input', e => {
+        // @ts-ignore
+        const todoId = e.target.closest('li').id
+        // @ts-ignore
+        updateTodo(todoId)
 
     })
 
-// inputTodo?.addEventListener('input', function (event) {
-//     const target = event.target as HTMLInputElement;
-//     console.log(target.value);
-// });
+    function removeTodo(todoId: any) {
+        // @ts-ignore
+        todosListsLc = todosListsLc.filter(todo => todo.id != todoId)
 
+        localStorage.setItem('todos', JSON.stringify(todosListsLc))
+
+        document.getElementById(todoId).remove()
+    }
+
+    function updateTodo(todoId: any) {
+        // @ts-ignore
+        let currentTodo = todosListsLc.find(todo => todo.id == todoId)
+        if (!currentTodo.isShowing) {
+            currentTodo.isShowing = true
+
+
+
+        } else {
+            currentTodo.isShowing = false
+        }
+
+
+        localStorage.setItem('todos', JSON.stringify(todosListsLc))
+    }
+
+    function createTodo(todo: any) {
+        const todoLi = document.createElement('li')
+
+        todoLi.setAttribute('id', todo.id)
+
+        if (todo.isShowing) {
+            todoLi.classList.add('complete')
+        }
+
+        todoLi.innerHTML = `
+                <div>
+                    <input type="checkbox" name="todos" id="${todo.id}" ${todo.isShowing ? 'checked' : ''}
+                    <span>${todo.name}</span>
+                    <button class="remove-task">&times;</button>
+                </div>
+        `
+
+        listsTodo.appendChild(todoLi)
+    }
 })

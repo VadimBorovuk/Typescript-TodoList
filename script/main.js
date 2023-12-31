@@ -1,82 +1,75 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function drawLists(arr, body) {
-    if (!!arr.length) {
-        arr.forEach(function (item) {
-            // @ts-ignore
-            var li = document.createElement('li');
-            li.className = 'list-todo';
-            // @ts-ignore
-            li.innerHTML = "\n                ".concat(item.name, "\n                <button class=\"btn-remove-list\" id=\"close-").concat(item.id, "\">&times;</button>\n            ");
-            body.appendChild(li);
-        });
-    }
-    else {
-        var allLi = document.querySelectorAll('.list-todo');
-        allLi.forEach(function (list) { return list.remove(); });
-    }
-}
-function clearFieldsList() {
-    var allLi = document.querySelectorAll('.list-todo');
-    allLi.forEach(function (list) { return list.remove(); });
-}
 document.addEventListener("DOMContentLoaded", function () {
-    var inputTodo = document.querySelector('#todo-name');
-    var createTodo = document.querySelector('#create-todo');
-    var createAll = document.querySelector('#clear-all');
+    var clearAll = document.querySelector('#clear-all');
     var listsTodo = document.querySelector('#lists-todo');
-    var todosLists = JSON.parse(localStorage.getItem('lists')) || [];
-    drawLists(todosLists, listsTodo);
-    var btnRemoveList = document.querySelectorAll('.btn-remove-list');
-    btnRemoveList.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var listId = btn.id.split('-')[1];
-            // @ts-ignore
-            todosLists = todosLists.filter(function (todo) { return todo.id != listId; });
-            drawLists(todosLists, listsTodo);
+    var todosListsLc = JSON.parse(localStorage.getItem('todos')) || [];
+    var inputTodo = document.querySelector('#todo-name');
+    var inputCheck = document.querySelector('#todo-check');
+    var formCreateTodo = document.querySelector('#form-todo');
+    if (localStorage.getItem('todos')) {
+        todosListsLc.map(function (todo) {
+            createTodo(todo);
         });
-    });
-    // if (btnRemoveList) {
-    //     btnRemoveList.addEventListener('click', () => {
-    //         const buttonId = btnRemoveList.id;
-    //         console.log('Button ID:', buttonId);
-    //     })
-    // }
-    // if (!!todosLists.length) {
-    //     drawLists(todosLists, listsTodo)
-    //     createAll.removeAttribute('disabled')
-    // } else {
-    //     drawLists([], listsTodo)
-    //     createAll.setAttribute('disabled', '');
-    // }
-    createAll.addEventListener('click', function () {
-        // @ts-ignore
-        localStorage.setItem('lists', []);
-        clearFieldsList();
-        drawLists([], listsTodo);
-    });
-    createTodo.addEventListener('click', function () {
-        var allLi = document.querySelectorAll('.list-todo');
-        allLi.forEach(function (list) { return list.remove(); });
+    }
+    formCreateTodo.addEventListener('submit', function (e) {
+        e.preventDefault();
         if (!!inputTodo.value.length) {
             var objTodo = {
                 id: Date.now(),
                 name: inputTodo.value.trim(),
-                isShowing: true
+                isShowing: inputCheck.checked
             };
-            todosLists.push(objTodo);
-            console.log(todosLists);
-            drawLists(todosLists, listsTodo);
+            todosListsLc.push(objTodo);
             inputTodo.value = '';
-            localStorage.setItem('lists', JSON.stringify(todosLists));
-            // return todosLists
+            localStorage.setItem('todos', JSON.stringify(todosListsLc));
+            createTodo(objTodo);
         }
         else {
             alert('input not must be empty');
         }
     });
-    // inputTodo?.addEventListener('input', function (event) {
-    //     const target = event.target as HTMLInputElement;
-    //     console.log(target.value);
-    // });
+    // @ts-ignore
+    formCreateTodo.reset();
+    inputTodo.focus();
+    listsTodo.addEventListener('click', function (e) {
+        // @ts-ignore
+        if (e.target.classList.contains('remove-task')) {
+            // @ts-ignore
+            var todoId = e.target.closest('li').id;
+            removeTodo(todoId);
+        }
+    });
+    listsTodo.addEventListener('input', function (e) {
+        // @ts-ignore
+        var todoId = e.target.closest('li').id;
+        // @ts-ignore
+        updateTodo(todoId, e.target);
+    });
+    function removeTodo(todoId) {
+        // @ts-ignore
+        todosListsLc = todosListsLc.filter(function (todo) { return todo.id != todoId; });
+        localStorage.setItem('todos', JSON.stringify(todosListsLc));
+        document.getElementById(todoId).remove();
+    }
+    function updateTodo(todoId, el) {
+        // @ts-ignore
+        var currentTodo = todosListsLc.find(function (todo) { return todo.id == todoId; });
+        if (!currentTodo.isShowing) {
+            currentTodo.isShowing = true;
+        }
+        else {
+            currentTodo.isShowing = false;
+        }
+        localStorage.setItem('todos', JSON.stringify(todosListsLc));
+    }
+    function createTodo(todo) {
+        var todoLi = document.createElement('li');
+        todoLi.setAttribute('id', todo.id);
+        if (todo.isShowing) {
+            todoLi.classList.add('complete');
+        }
+        todoLi.innerHTML = "\n                <div>\n                    <input type=\"checkbox\" name=\"todos\" id=\"".concat(todo.id, "\" ").concat(todo.isShowing ? 'checked' : '', "\n                    <span>").concat(todo.name, "</span>\n                    <button class=\"remove-task\">&times;</button>\n                </div>\n        ");
+        listsTodo.appendChild(todoLi);
+    }
 });
